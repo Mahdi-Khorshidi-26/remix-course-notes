@@ -178,12 +178,179 @@
 			}
 			
 			
-12- (session 28)			
+12- Installing Postgres database  : for installing the database of postgres we can use docker which is like this 
+		    first we need to install docker on our system also creating a file called whatever we want in this case
+			we'll call it docker-compose.yml then the following things written in it
+			services:
+  postgres:
+    image: postgres:latest
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    volumes:
+      - ./postgres-data:/var/lib/postgresql/data
+    restart: always
+
+			and run it then we are going to 
+			go for running it with "docker-compose up -d" it 	
+			then the folder postgres-data would get created for us then we add it to the .gitignore for here after that 
+			creating the .env file for the variables next step installing an ORM for database .
 			
 			
 			
-			
+13- installing prisma : first the installing process comes along 
+		1-npm i --save-dev prisma 
+		2-npm i @prisma/client
+		3-npx prisma init --datasource-provider postgresql
 		
 		
+14- Putting an index file : another thing we need to notice is that for e.g. when we have a sub route 
+		and we want to make that the default route we can make it much more easier by doing 3 ways :
+
+		3-creating the index.tsx file in the sub folder then we go in it and we can do these : 
+
+		// Either we do below or we can redirect using a loader function
+
+		import { LoaderFunction, redirect } from "@remix-run/node";
+
+		//import Pantry from "./pantry";
+
+		// export default function Index() {
+		//   return <Pantry />;
+		// }
+
+		export const loader: LoaderFunction = () => {
+		//   return new Response(null, {
+		//     status: 302,
+		//     headers: {
+		//       Location: "/app/pantry",
+		//     },
+		//   });
+			return redirect("/app/pantry");
+		};
+
+
+15- Creating the database for a Page : 
+		1- going to schema.prisma 
+		2- creating the model or the table like below : 
+
+		model PantryShelf{
+		// autoincrement() , uuid() , cuid() 
+		// autoincrement() is used to generate a unique integer for the primary key and increments it by 1 for each new record.
+		// uuid() is used to generate a unique string for the primary key.
+		// cuid() is used to generate a unique string for the primary key.
+		// The difference between uuid() and cuid() is that uuid() generates a random string,
+		// while cuid() generates a string based on the current time and a random number.
+		id String @id @default(cuid())
+		name String
+		createdAt DateTime @default(now())
+		updatedAt DateTime @updatedAt
+		items PantryItem[] 
+		}
+
+		model PantryItem{
+		id String @id @default(cuid())
+		name String
+		shelfId String 
+
+		createdAt DateTime @default(now())
+		updatedAt DateTime @updatedAt
+
+		shelf PantryShelf @relation(fields: [shelfId], references: [id] , onDelete: Cascade)
+		}
+
+		also after creating these we should make sure that the "docker-compose up -d"
+		is running and then we go for pushing the db by "npx prisma db push"
+		after this we can see the tables in " npx prisma studio "
+
+
+16- seed data and function : after creating the model for prisma 
+		then we can create a file called like seed.ts in the prisma folder to
+		push some test data which for running that file we need to install "npm i --save-dev tsx"
+		after that the value of the file could be such a thing like : 
+		import { PrismaClient } from "@prisma/client";
+		const db = new PrismaClient();
+
+		function getShelves() {
+		return [
+			{
+			name: "Dairy",
+			items: {
+				create: [
+				{
+					name: "Milk",
+				},
+				{
+					name: "Pasta",
+				},
+				{
+					name: "Eggs",
+				},
+				{
+					name: "Cheese",
+				},
+				],
+			},
+			},
+			{
+			name: "Fruits",
+			items: {
+				create: [
+				{
+					name: "Apples",
+				},
+				{
+					name: "Oranges",
+				},
+				{
+					name: "Bananas",
+				},
+				{
+					name: "Cheese",
+				},
+				],
+			},
+			},
+			{
+			name: "Grocery",
+			items: {
+				create: [
+				{
+					name: "Chicken",
+				},
+				{
+					name: "Pasta",
+				},
+				{
+					name: "Celery",
+				},
+				{
+					name: "Carrots",
+				},
+				],
+			},
+			},
+		];
+		}
+
+		async function seed() {
+		await Promise.all(
+			getShelves().map((shelf) => db.pantryShelf.create({ data: shelf }))
+		);
+		}
+
+		seed();
 		
-		
+
+		then we go into the package.json file and we add a new section under engines like :
+		"prisma":{
+			"seed":"tsx ./prisma/seed.ts"
+		}
+		then for running this we'd say : npx prisma db seed
+
+
+
+17- (session 35) 
