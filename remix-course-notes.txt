@@ -1,0 +1,189 @@
+1- Explaning what remix is .
+		how to create a remix project from ground up : npx create-remix@latest
+		
+2- Using the V1 default routing by first installing the npm package related to that : 
+		npm i @remix-run/v1-route-convention
+		then we need to go to vite.config.ts to change couple of files :
+		first we should do the changes into defineConfige function :
+		in the remix() function we need to add the following : 
+		ignoredRouteFiles: ["**/.*"],
+		routes(defineRoutes){
+			return createRoutesFormFolders(defineRoutes);
+		}
+		also the defineConfige we can change the port that we want our 
+		local server to be run on it so next to plugins:[] we can say :
+		server:{
+			port:3000
+		}
+		NOTE : the name of _index.tsx in the routes folder 
+		should become index.tsx after changing the routing convention.
+		if the tsconfing.ts file made some error in here just needs some 
+		refreshing the window of the editor . 
+		
+3- Routing : what ever files names we define it becomes the route 
+		for example in the routes folder we define a new component called: 
+		Sales.tsx then /sales is the route defined for it .
+		in the file there are some functions that can be defined to work around some customizition like 
+		also it should not be forgotten that what ever named function component we " export default " it 
+		it is the main Ui that is going to be shown then for the customizition we have some other 
+		functions that they just need to be "export" like (these are reserved names): 
+		1- export function loader() " Fetches and returns the data that the Sales component needs to display "
+		2- export function action() " Handles form submissions "
+		3- export function links()  " Defines <link> elements to add to the page when the user visits this route"
+		4- export function meta()   " Returns metadata (e.g. page title ,description)
+		5- export function ErrorBoundary() "React component that is displayed when an error accurs .
+		6- export function headers()" HTTP headers to return with the page "
+		7- export function handle() " Allows you to create custom application conventions
+		8- export function shouldRevalidate() " Tool for additional optimization of data revalidation "
+		also not to forget that we are writing the code in TS so each one of these has their own types 
+		which I have defined next to the name of function where it should be . 
+		NOTE : for e.g. loader and action go to SSR . ( more explnation later )
+		
+4- Navigation between pags : 
+		for navigating between pages we can use <Link to="destination">somthing</Link> component
+		also we have <NavLink to="destination">
+						{(isActive)=>{return somthing}}
+					</NavLink>		
+					which in here we can install the clsx and use the isActive part in here for 
+					classes to be passed condionaly.
+		for creating nested routes for e.g. we have routes folder and in it we have Sales.tsx 
+		then under that we want to have some other routes like /sales/app or /sales/settings
+		we need to create a folder by sales name the exact same name of the component we want
+		nested route under , then under that what ever components we define is the nested ones .
+		also notice that in the parent component in the component tree we should define the 
+		<Outlet/> just to show where we want the nested routes to be shown . 
+		
+5- Matching routes : this is something like for e.g. when we are under /sales/app/settings
+		the matching routes are going to be [root.tsx,index.tsx,sales.tsx,app.tsx,settings.tsx]
+		which this can help us to be aware of the tree component and how to access data 
+		from the tree . 
+		more explnation for later but just to be clear about the remix root.tsx 
+		is like that the App component is getting passed as a childeren to Layout component
+		and this Layout is only going to work in the root.tsx file not anywhere else .
+		so if we want any thing to be there for all the components we can put it in 
+		App component in root.tsx file next to <Outlet/>.
+		
+6- There are some espiciall components getting called in the Layout component in the 
+		root.tsx file :
+		
+		1- <ScrollRestoration /> :(like emulation of default web behavouirs)
+			this is speciall component that helps us to have the scroll to be back 
+			where ever we have left it there in the previous page we were in .
+			
+		2- <Meta/> : which renders the meta links returned by the component export function meta():MetaFunction{}
+		in each route or main component the example for it can be like :
+		export const meta: MetaFunction = () => {
+				return [
+						{ title: "Recipe App" },
+						{ name: "description", content: "this is a food recipe app " },
+					];
+					};
+					
+		3- <Links/> : this is the html links not the <a/> acullty its about the links in html 
+			that we use to for e.g. loading the styles in html or fonts or other things like that . 
+			which a good example of it can be : 
+			before going for explnation of this lets say how we can load and use our styles or the css 
+			matter in the remix : 
+			
+			1- creating the files styles.css where ever we want then importing them like 
+			@import 'filename.css' then passing the class names defined in the css files to the 
+			needed tags 
+			
+			2- creating the css files and loading them with a links function like below :
+			@import styles from 'fileaddress?url'
+			"?url" in the import makes it a url so we can pass it to the href file in the links function:
+				export function links:LinksFunction(){
+					return [
+					{rel:"stylesheet",href:styles},
+					]
+				}
+			we should know that for each file we should import and write this boiler plate code so it's a bit 
+			annoying . 
+			
+			3- creating the css modules and importing them and passing the classes to the files . 
+			
+			4- using tailwindcss which when you install the remix the tailwind is installed atumaticly .
+			
+			
+7- For using Icons we can use heroicons and then copying the jsx straight from it and it is really good .	
+			
+			
+			
+8- What are loaders : first of all we should say that the defining process is like this : 
+			export function loader():LoaderFunction{
+				return {message:"hello world!"}
+				}
+			and the usage in the main component is like :
+			//do not forget to import them ;
+			const data = useLoaderData();
+			console.log(data.message)
+			
+			then we should know that loading data in remix is a bit different from react.js or next.js
+			which these are going to load the component firts and give you the option to show a pending state 
+			until the data gets loaded . but in remix the data gets loaded before the component gets 
+			loaded so first data then component so the handling part of the pending is a bit different
+			but should be know that this has several advantages and the good things out way to the disadvantages 
+			so for example we can load data in parallel and another thing is that we avoid waterfall loading .
+			so it makes our app so faster than usuall .and another thing is that since loader function
+			is SSR so we can directly talk to database or do the BE implematations there for e.g. later . 
+			
+			
+9- How to pending Ui : 
+			1- one way is that we can add the feature reloadDocumet to Link or NavLink component
+			so this is a default behavouir of the browser that shows a spinner up where favicon 
+			exist then user would see that there is something happening . 
+			
+			2- another way is that we can use useNavigation which gives us some status like this :
+			const navigation = useNavigation()
+			const isloading = navigation.status === "which this can be loading/idle/submitting "
+			and also to make sure that we are in the right route we can add another condition to above to say :
+			const isloading = navigation.state === 'loading' && navigation.location.pathname === to;
+			which if we see the value for navigation.location.pathname is the compelete url and "to" is just the 
+			name of the route or the dynamic route value so to make them equivalent we can use a new hook called 
+			const path = useResolvedPath(to)
+			so the second part of should be :  navigation.location.pathname === path.pathname;
+			
+			
+10-Sharing data between Routes in component tree: 			
+			in remix where ever we have a useLoaderData in a component tree we can have load and have and pass
+			that data from a parent to a child / child  to parent 
+			as long as it is in the component tree so we can use a hook from remix called : 
+			const matches = useMatches()
+			so the matches is an array of object filled with the component tree information like to say 
+			{
+				data : "from loaderData"
+				handle: "explnation later"
+				id: "is the route"
+				params:{}
+				pathname:"for example / "
+			}
+			so we can create a custom hook getting the id as parameter then passing us the data from the component
+			needed in the component tree. 
+			another thing about useLoaderData is that if we pass a type to it the error would be visible right away :
+			const data = useLoaderData<typeof loader>()
+			which the loader is the function we have defined earlier. 
+			
+			
+11- Error Handling : for this part we can use the ErrorBoundary function we have talked about earlier :
+			and what ever we show in here will get shown instead of default component also we can make it to show the 
+			acuall error too like below : 
+			export function ErrorBoundary(){
+				const error = useRouteError() " this gets actuall the error for that route"
+				// to avoid errors of types we can put this if
+				
+				if(error instanceof Error){
+				return <div>{error.message}</div>
+				}
+				return <div>an unexpected error occurred</div>
+			}
+			
+			
+12- (session 28)			
+			
+			
+			
+			
+		
+		
+		
+		
